@@ -30,7 +30,7 @@
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; scroll-padding-top: 20px; }
 
     body {
       margin: 0;
@@ -74,6 +74,12 @@
       transition: .2s;
     }
     .nav a:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .nav a:focus-visible,
+    .links a:focus-visible,
+    .theme-btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
 
     /* ---------- 通用区块 ---------- */
     section { padding: 30px 0; }
@@ -154,19 +160,30 @@
       z-index: 10;
     }
     .theme-btn:hover { transform: scale(1.08); }
+
+    @media (max-width: 480px) {
+      .hero { padding-top: 68px; }
+      .card { padding: 22px 20px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 
 <body>
   <!-- 深色模式切换 -->
-  <button id="themeBtn" class="theme-btn" aria-label="切换深色模式">🌙</button>
+  <button id="themeBtn" class="theme-btn" type="button" aria-label="切换深色模式" aria-pressed="false">🌙</button>
 
   <!-- 顶部名片 -->
   <header class="hero">
-    <div class="avatar">👨‍💻</div>
+    <div class="avatar" aria-hidden="true">👨‍💻</div>
     <h1>你好，我是 <span class="accent">小明</span></h1>
     <p class="tagline">这是我的第一个个人网站 —— 一个正在学习编程的普通人。</p>
-    <nav class="nav">
+    <nav class="nav" aria-label="主导航">
       <a href="#about">关于我</a>
       <a href="#skills">技能</a>
       <a href="#hobbies">爱好</a>
@@ -209,22 +226,22 @@
       <h2>🎈 我的爱好</h2>
       <div class="grid">
         <div class="hobby">
-          <div class="emoji">📚</div>
+          <div class="emoji" aria-hidden="true">📚</div>
           <h3>阅读</h3>
           <p>喜欢科幻和技术类书籍，最近在读《代码大全》。</p>
         </div>
         <div class="hobby">
-          <div class="emoji">🎧</div>
+          <div class="emoji" aria-hidden="true">🎧</div>
           <h3>听音乐</h3>
           <p>写代码必备，偏好轻音乐和民谣。</p>
         </div>
         <div class="hobby">
-          <div class="emoji">🏃</div>
+          <div class="emoji" aria-hidden="true">🏃</div>
           <h3>跑步</h3>
           <p>每周跑三次，跑步时想问题最清楚。</p>
         </div>
         <div class="hobby">
-          <div class="emoji">🎮</div>
+          <div class="emoji" aria-hidden="true">🎮</div>
           <h3>玩游戏</h3>
           <p>偶尔打打独立游戏，也会研究游戏是怎么做出来的。</p>
         </div>
@@ -238,8 +255,8 @@
         <p style="color:var(--muted);margin-top:0">欢迎交流，随时给我发消息～</p>
         <div class="links">
           <a href="mailto:your@email.com">📧 邮箱</a>
-          <a href="https://github.com/" target="_blank" rel="noopener">💻 GitHub</a>
-          <a href="https://weibo.com/" target="_blank" rel="noopener">🌐 社交主页</a>
+          <a href="https://github.com/" target="_blank" rel="noopener noreferrer">💻 GitHub</a>
+          <a href="https://weibo.com/" target="_blank" rel="noopener noreferrer">🌐 社交主页</a>
         </div>
       </div>
     </section>
@@ -257,19 +274,43 @@
     const root = document.documentElement;
     const themeBtn = document.getElementById('themeBtn');
 
-    // 读取上次的选择
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) root.dataset.theme = savedTheme;
+    function getPreferredTheme() {
+      try {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
+      } catch (error) {
+        // localStorage 在禁用或受限环境下可能不可用，回退到系统设置。
+      }
 
-    function updateThemeBtn() {
-      themeBtn.textContent = root.dataset.theme === 'dark' ? '☀️' : '🌙';
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
     }
-    updateThemeBtn();
+
+    function applyTheme(theme, save = false) {
+      const isDark = theme === 'dark';
+      if (isDark) {
+        root.dataset.theme = 'dark';
+      } else {
+        delete root.dataset.theme;
+      }
+      themeBtn.textContent = isDark ? '☀️' : '🌙';
+      themeBtn.setAttribute('aria-pressed', String(isDark));
+
+      if (save) {
+        try {
+          localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        } catch (error) {
+          // 主题仍可在当前页面切换，只是不保存到下次访问。
+        }
+      }
+    }
+
+    applyTheme(getPreferredTheme());
 
     themeBtn.addEventListener('click', () => {
-      root.dataset.theme = root.dataset.theme === 'dark' ? '' : 'dark';
-      localStorage.setItem('theme', root.dataset.theme);
-      updateThemeBtn();
+      const currentTheme = root.dataset.theme === 'dark' ? 'dark' : 'light';
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark', true);
     });
 
     /* ---------- 年份 ---------- */
