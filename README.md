@@ -1,10 +1,12 @@
 # my-personal-website
 My first personal website
 <html>
-  <title>
-    My first personal website 
-  </title>
+   <head>
+    <title>
+     My first personal website 
+    </title>
+   </head>
   <body control>
-    This is my first personal website.
+   This is my first personal website.
   </body>
 </html>
